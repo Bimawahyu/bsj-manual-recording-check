@@ -1,0 +1,95 @@
+name: BSJ Manual Recording Check
+
+run-name: BSJ Manual ${{ inputs.request_id }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      request_id:
+        description: "Client request ID"
+        required: true
+        type: string
+      payload:
+        description: "Encrypted request payload"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  manual-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      TZ: Asia/Jakarta
+      PYTHONUNBUFFERED: "1"
+
+      # BSJ credentials stay in GitHub Actions Secrets.
+      BSJ_API_BASE_URL: https://y.gpstracktech.com/api
+      BSJ_API_KEY: ${{ secrets.BSJ_API_KEY }}
+      BSJ_API_VERSION: "1.0"
+      BSJ_API_LANGUAGE: en
+      BSJ_API_TIMEOUT_SECONDS: "45"
+      BSJ_API_MAPPING_BATCH_SIZE: "100"
+      BSJ_API_MAX_WORKERS: "5"
+      BSJ_API_MAX_RETRIES: "5"
+      BSJ_API_RETRY_BACKOFF_SECONDS: "2"
+      BSJ_API_RETRY_BACKOFF_MAX_SECONDS: "20"
+      BSJ_OFFICIAL_MIN_INTERVAL_SECONDS: "0.20"
+
+      BSJ_WEB_BASE_URL: https://y.gpstracktech.com
+      BSJ_WEB_USERNAME: ${{ secrets.BSJ_WEB_USERNAME }}
+      BSJ_WEB_PASSWORD_PAYLOAD: ${{ secrets.BSJ_WEB_PASSWORD_PAYLOAD }}
+      BSJ_WEB_TIMEOUT_SECONDS: "45"
+      BSJ_ENGINE_PAGE_SIZE: "100"
+      BSJ_ENGINE_MAX_PAGES: "100"
+      BSJ_ENGINE_LOOKBACK_DAYS: "1"
+      BSJ_ENGINE_REQUEST_DELAY_SECONDS: "0.15"
+      BSJ_ENGINE_MIN_INTERVAL_SECONDS: "0.25"
+
+      APP_UTC_OFFSET_HOURS: "7"
+      BSJ_FILELIST_REQUEST_TIME_MODE: LOCAL
+      BSJ_FILELIST_RESPONSE_TIME_MODE: LOCAL
+      RECORDING_CHECKER_WAKE_WAIT_SECONDS: "60"
+      RECORDING_CHECKER_GAP_THRESHOLD_SECONDS: "60"
+
+      # Same fine-grained PAT entered in the web page. The page uses it only
+      # for this repo's Actions API and as the local encryption key.
+      MANUAL_GITHUB_TOKEN: ${{ secrets.MANUAL_GITHUB_TOKEN }}
+      REQUEST_ID: ${{ inputs.request_id }}
+      REQUEST_PAYLOAD: ${{ inputs.payload }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Validate required secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$BSJ_API_KEY" || { echo "BSJ_API_KEY is missing"; exit 1; }
+          test -n "$BSJ_WEB_USERNAME" || { echo "BSJ_WEB_USERNAME is missing"; exit 1; }
+          test -n "$BSJ_WEB_PASSWORD_PAYLOAD" || { echo "BSJ_WEB_PASSWORD_PAYLOAD is missing"; exit 1; }
+          test -n "$MANUAL_GITHUB_TOKEN" || { echo "MANUAL_GITHUB_TOKEN is missing"; exit 1; }
+
+      - name: Run manual recording check
+        run: python manual_runner.py
+
+      - name: Upload result
+        uses: actions/upload-artifact@v4
+        with:
+          name: bsj-manual-${{ inputs.request_id }}
+          path: output/
+          if-no-files-found: error
+          retention-days: 7
