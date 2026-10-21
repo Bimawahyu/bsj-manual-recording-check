@@ -35,20 +35,7 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.connection-details
   <div class="badges"><div id="githubBadge" class="badge muted">GitHub belum terkoneksi</div><div id="workflowBadge" class="badge muted">Workflow belum dicek</div></div>
 </header>
 
-<details class="panel connection-details" open>
-  <summary>Koneksi GitHub</summary>
-  <div class="setup" style="margin-top:16px">
-    <div class="field">
-      <label for="githubToken">GitHub access token</label>
-      <input id="githubToken" type="password" placeholder="Fine-grained PAT untuk repo ini" autocomplete="off">
-      <div class="helper">Token hanya disimpan di session browser. Gunakan token yang sama dengan secret <code>MANUAL_GITHUB_TOKEN</code> di repo.</div>
-      <div class="security-note">Repo: <strong>Bimawahyu/bsj-manual-recording-check</strong>. Token minimal perlu permission <strong>Actions: Read and write</strong> untuk repo ini.</div>
-    </div>
-    <div class="actions"><button id="connectBtn" class="secondary">Connect</button><button id="forgetBtn" class="ghost">Forget</button></div>
-  </div>
-</details>
-
-<section id="connectionNotice" class="notice info"><strong>Belum terkoneksi.</strong> Masukkan GitHub token untuk menjalankan Manual Recording Check lewat GitHub Actions.</section>
+<section id="connectionNotice" class="notice info hidden"></section>
 
 <section class="panel query">
   <div class="field"><label for="imeis">Device IMEI <span class="required">*</span></label><textarea id="imeis" rows="4" placeholder="55000147064&#10;55000147065"></textarea><div class="helper"><span id="deviceCount">0 device detected</span> · comma, space, semicolon, atau enter bisa dipakai</div></div>
@@ -123,36 +110,43 @@ function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){retur
 function toast(message,error){var x=el('toast');x.textContent=message;x.className='toast'+(error?' error':'');x.classList.remove('hidden');setTimeout(function(){x.classList.add('hidden');},5000);}
 function parseImeis(){var clean=el('imeis').value.normalize('NFKC').replace(/[\u200B-\u200D\uFEFF]/g,'');return clean.split(/[,;\s]+/).map(function(x){return x.trim();}).filter(Boolean).filter(function(x,i,a){return a.indexOf(x)===i;});}
 function updateCount(){var n=parseImeis().length;el('deviceCount').textContent=n+' device'+(n===1?'':'s')+' detected';}
-function token(){return sessionStorage.getItem('bsjGithubToken')||'';}
+function token(){return localStorage.getItem('bsjGithubToken')||'';}
 function ghHeaders(extra){var h={'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'};if(token())h['Authorization']='Bearer '+token();Object.keys(extra||{}).forEach(function(k){h[k]=extra[k];});return h;}
 async function ghFetch(path,options){options=options||{};options.headers=ghHeaders(options.headers||{});return fetch(API+path,options);}
 async function ghJson(path,options){var r=await ghFetch(path,options);var data={};try{data=await r.json();}catch(e){}if(!r.ok)throw new Error((data&&data.message)||('GitHub API '+r.status));return data;}
 function setProgress(title,message,pct){el('progressPanel').classList.remove('hidden');el('progressTitle').textContent=title;el('progressMessage').textContent=message||'';el('progressPct').textContent=pct+'%';el('progressBar').style.width=pct+'%';}
 
 async function connect(){
-  var t=el('githubToken').value.trim();
-  if(t)sessionStorage.setItem('bsjGithubToken',t);
-  if(!token()){toast('Masukkan GitHub token.',true);return;}
-  el('connectBtn').disabled=true;
+  var notice=el('connectionNotice');
+  if(!token()){
+    el('githubBadge').textContent='Setup diperlukan';
+    el('githubBadge').className='badge muted';
+    el('workflowBadge').textContent='Workflow belum dicek';
+    el('workflowBadge').className='badge muted';
+    el('runBtn').disabled=true;
+    notice.classList.remove('hidden');
+    notice.innerHTML='<strong>Browser ini belum disiapkan.</strong> Buka <a href="./setup.html">setup satu kali</a>, lalu halaman utama akan auto-connect seterusnya.';
+    return;
+  }
   try{
     var wf=await ghJson('/repos/'+OWNER+'/'+REPO+'/actions/workflows/'+WORKFLOW);
     el('githubBadge').textContent='GitHub connected';
     el('githubBadge').className='badge';
     el('workflowBadge').textContent=wf.state==='active'?'Manual workflow ready':'Workflow '+wf.state;
     el('workflowBadge').className='badge '+(wf.state==='active'?'':'muted');
-    el('connectionNotice').innerHTML='<strong>Siap.</strong> Manual check akan dijalankan di GitHub Actions. Tidak perlu backend staging.';
+    notice.classList.add('hidden');
     el('runBtn').disabled=wf.state!=='active';
-    toast('GitHub connected.');
   }catch(e){
     el('githubBadge').textContent='GitHub token gagal';
     el('githubBadge').className='badge bad';
     el('workflowBadge').textContent='Workflow unavailable';
     el('workflowBadge').className='badge muted';
     el('runBtn').disabled=true;
+    notice.classList.remove('hidden');
+    notice.innerHTML='<strong>Koneksi GitHub gagal.</strong> <a href="./setup.html">Perbarui token browser</a>.';
     toast(e.message,true);
-  }finally{el('connectBtn').disabled=false;}
+  }
 }
-function forget(){sessionStorage.removeItem('bsjGithubToken');el('githubToken').value='';el('githubBadge').textContent='GitHub belum terkoneksi';el('githubBadge').className='badge muted';el('workflowBadge').textContent='Workflow belum dicek';el('workflowBadge').className='badge muted';el('runBtn').disabled=true;}
 
 function bytesToBase64Url(bytes){
   var binary='';var chunk=0x8000;
@@ -172,7 +166,7 @@ function requestId(){return crypto.randomUUID().replace(/-/g,'').slice(0,16);}
 
 async function runCheck(){
   var imeis=parseImeis();var date=el('date').value;
-  if(!token()){toast('Connect ke GitHub dulu.',true);return;}
+  if(!token()){toast('Browser belum disiapkan. Buka setup.html satu kali.',true);return;}
   if(!imeis.length||!date){toast('Isi IMEI dan tanggal recording.',true);return;}
   if(imeis.length>300){toast('Maksimum 300 device per check.',true);return;}
   el('runBtn').disabled=true;el('resultArea').classList.add('hidden');el('detailPanel').classList.add('hidden');
@@ -293,8 +287,8 @@ function renderTimeline(imei,d,chRows,engineRows,files){
 }
 function exportExcel(){if(!currentExcelBlob){toast('Excel result belum tersedia.',true);return;}var url=URL.createObjectURL(currentExcelBlob);var a=document.createElement('a');a.href=url;a.download='BSJ_Manual_Recording_'+(el('date').value||'result')+'.xlsx';document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(url);},1000);}
 
-el('imeis').addEventListener('input',updateCount);el('connectBtn').addEventListener('click',connect);el('forgetBtn').addEventListener('click',forget);el('runBtn').addEventListener('click',runCheck);el('exportBtn').addEventListener('click',exportExcel);el('closeDetail').addEventListener('click',function(){el('detailPanel').classList.add('hidden');});
-window.addEventListener('load',function(){el('githubToken').value=sessionStorage.getItem('bsjGithubToken')||'';el('date').value=new Date().toISOString().slice(0,10);updateCount();if(token())connect();});
+el('imeis').addEventListener('input',updateCount);el('runBtn').addEventListener('click',runCheck);el('exportBtn').addEventListener('click',exportExcel);el('closeDetail').addEventListener('click',function(){el('detailPanel').classList.add('hidden');});
+window.addEventListener('load',function(){el('date').value=new Date().toISOString().slice(0,10);updateCount();connect();});
 </script>
 </body>
 </html>
