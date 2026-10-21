@@ -1,0 +1,1 @@
+# bsj-manual-recording-check
