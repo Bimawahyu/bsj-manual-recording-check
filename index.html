@@ -201,5 +201,6 @@ async function exportExcel(){if(!currentJob){toast("Belum ada completed job.",tr
 $("imeis").addEventListener("input",updateCount);$("connectBtn").addEventListener("click",connect);$("forgetBtn").addEventListener("click",forget);$("runBtn").addEventListener("click",run);$("exportBtn").addEventListener("click",exportExcel);$("closeDetail").addEventListener("click",()=>$("detailPanel").classList.add("hidden"));
 window.addEventListener("load",()=>{$("backendUrl").value=localStorage.getItem("bsjRemoteBackend")||"";$("accessToken").value=sessionStorage.getItem("bsjRemoteToken")||"";$("date").value=new Date().toISOString().slice(0,10);updateCount();if($("backendUrl").value)connect()});
 </script>
+<!-- deployment-ready-2026-10-21 -->
 </body>
 </html>
