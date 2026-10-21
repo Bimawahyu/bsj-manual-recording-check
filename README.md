@@ -1,47 +1,74 @@
-# BSJ Manual Recording Check
+# BSJ Manual Recording Check — GitHub Only
 
-Single-page remote dashboard untuk **Manual Recording Check**.
+Single-page Manual Recording Check yang berjalan tanpa staging/VPS.
+
+## Arsitektur
+
+```
+Browser / GitHub Pages
+        |
+        | workflow_dispatch (encrypted payload)
+        v
+GitHub Actions
+        |
+        +--> BSJ realtime ACC
+        +--> wake ONLY jika ACC OFF
+        +--> File List
+        +--> Engine ON/OFF history
+        +--> completeness + gap
+        |
+        v
+GitHub Actions Artifact
+        |
+        v
+Browser menampilkan result + timeline + Excel
+```
+
+GitHub Pages hanya menjadi UI. Python dijalankan oleh GitHub Actions runner.
+
+## Wake rule
+
+Realtime `/monitor/getRealTimeInfo` dibaca lebih dulu:
+
+- `accState=0` = ACC ON -> **tidak wake**, langsung File List.
+- `accState=1` = ACC OFF -> wake -> tunggu 60 detik -> File List.
+- ACC unknown -> tidak wake, langsung mencoba File List.
+
+## Repository secrets
+
+Tambahkan di **Settings -> Secrets and variables -> Actions -> New repository secret**:
+
+- `BSJ_API_KEY`
+- `BSJ_WEB_USERNAME`
+- `BSJ_WEB_PASSWORD_PAYLOAD`
+- `MANUAL_GITHUB_TOKEN`
+
+Jangan commit credential ke repository.
+
+### MANUAL_GITHUB_TOKEN
+
+Buat Fine-grained Personal Access Token khusus repo:
+
+`Bimawahyu/bsj-manual-recording-check`
+
+Permission minimal:
+
+- Repository permission **Actions: Read and write**
+
+Masukkan token yang sama sebagai repository secret `MANUAL_GITHUB_TOKEN` dan pada field **GitHub access token** di halaman web. Token pada halaman hanya disimpan di browser `sessionStorage`.
+
+IMEI + tanggal dienkripsi AES-GCM di browser menggunakan key turunan dari token sebelum dikirim sebagai workflow input. Workflow mendekripsinya menggunakan secret `MANUAL_GITHUB_TOKEN`.
 
 ## Live site
 
-Expected GitHub Pages URL:
+https://bimawahyu.github.io/bsj-manual-recording-check/
 
-`https://bimawahyu.github.io/bsj-manual-recording-check/`
+## Hasil
 
-## Cara kerja
+Setiap check menghasilkan artifact selama 7 hari:
 
-GitHub Pages hanya menjadi frontend. Proses BSJ tetap dijalankan oleh FastAPI backend yang kamu publish via HTTPS.
+- `result.json`
+- `result.xlsx`
+- `request_meta.json`
 
-```
-Browser
-  -> GitHub Pages
-  -> HTTPS BSJ Remote API
-  -> BSJ Official API + BSJ Platform
-```
-
-Credential BSJ **tidak** disimpan di repository ini.
-
-## Backend yang dibutuhkan
-
-Gunakan remote backend dari project BSJ Monitor dan jalankan endpoint manual-only, misalnya:
-
-```bash
-python -m uvicorn backend.app.remote_main:app --host 0.0.0.0 --port 8011
-```
-
-Environment backend:
-
-```env
-REMOTE_DASHBOARD_API_TOKEN=<long-random-token>
-REMOTE_DASHBOARD_ALLOWED_ORIGINS=https://bimawahyu.github.io
-```
-
-Plus credential BSJ yang sudah digunakan aplikasi lokal.
-
-## First deploy
-
-Repository ini public, jadi GitHub Pages tersedia pada GitHub Free. Bila Pages belum aktif, buka:
-
-**Settings -> Pages -> Build and deployment -> Source -> GitHub Actions**
-
-Setelah Source dipilih, workflow `.github/workflows/pages.yml` akan deploy site.
+Web mengambil artifact melalui GitHub API dan menampilkan summary, detail, gap, Engine events, Raw File List, dan 24-hour recording timeline.
