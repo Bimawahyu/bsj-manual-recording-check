@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Setup BSJ Manual Recording Check</title>
+<style>
+:root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#14213d;background:#f3f6fb}
+*{box-sizing:border-box}body{margin:0;background:#f3f6fb}.shell{max-width:760px;margin:60px auto;padding:24px}
+.panel{background:#fff;border:1px solid #dce5ef;border-radius:18px;padding:26px;box-shadow:0 2px 8px rgba(20,33,61,.04)}
+h1{margin:0 0 8px}.muted{color:#6d7b91;line-height:1.55}.field{display:flex;flex-direction:column;gap:8px;margin:24px 0}.field label{font-weight:800}
+input{width:100%;border:1px solid #ccd7e6;border-radius:12px;padding:14px 16px;font:inherit}
+button,a.btn{border:0;border-radius:11px;padding:13px 18px;font-size:15px;font-weight:800;cursor:pointer;text-decoration:none;display:inline-block}
+.primary{background:#265c9f;color:#fff}.ghost{background:#eef1f5;color:#445066}.actions{display:flex;gap:10px;flex-wrap:wrap}
+.notice{margin-top:18px;padding:14px 16px;border-radius:12px;background:#eaf4ff;border:1px solid #c6def8;color:#234f80}.bad{background:#fdeceb;border-color:#f2c7c2;color:#a92720}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+</style>
+</head>
+<body>
+<main class="shell">
+<section class="panel">
+  <h1>Setup satu kali</h1>
+  <p class="muted">Halaman utama tidak lagi menampilkan field token. Token disimpan hanya di browser ini melalui <code>localStorage</code> dan dipakai otomatis saat membuka dashboard.</p>
+
+  <div class="field">
+    <label for="token">GitHub Fine-grained PAT</label>
+    <input id="token" type="password" autocomplete="off" placeholder="Token Actions Read + Write untuk repo ini">
+    <div class="muted">Token harus sama dengan secret <code>MANUAL_GITHUB_TOKEN</code> karena juga dipakai sebagai key untuk request terenkripsi.</div>
+  </div>
+
+  <div class="actions">
+    <button id="saveBtn" class="primary">Save & Test</button>
+    <button id="clearBtn" class="ghost">Clear token</button>
+    <a class="btn ghost" href="./">Kembali</a>
+  </div>
+
+  <div id="status" class="notice">Belum dites.</div>
+</section>
+</main>
+<script>
+var OWNER='Bimawahyu',REPO='bsj-manual-recording-check',WORKFLOW='manual-check.yml',API='https://api.github.com';
+var input=document.getElementById('token'),status=document.getElementById('status');
+input.value=localStorage.getItem('bsjGithubToken')||'';
+async function testToken(t){
+  var r=await fetch(API+'/repos/'+OWNER+'/'+REPO+'/actions/workflows/'+WORKFLOW,{
+    headers:{'Accept':'application/vnd.github+json','Authorization':'Bearer '+t,'X-GitHub-Api-Version':'2022-11-28'}
+  });
+  var data={};try{data=await r.json();}catch(e){}
+  if(!r.ok)throw new Error((data&&data.message)||('GitHub API '+r.status));
+  if(data.state!=='active')throw new Error('Workflow state: '+data.state);
+}
+document.getElementById('saveBtn').onclick=async function(){
+  var t=input.value.trim();
+  if(!t){status.className='notice bad';status.textContent='Token masih kosong.';return;}
+  this.disabled=true;status.className='notice';status.textContent='Testing token…';
+  try{
+    await testToken(t);
+    localStorage.setItem('bsjGithubToken',t);
+    status.className='notice';
+    status.innerHTML='<strong>Berhasil.</strong> Browser ini sudah siap. Mengarahkan ke dashboard…';
+    setTimeout(function(){location.href='./';},700);
+  }catch(e){
+    status.className='notice bad';status.textContent='Gagal: '+e.message;
+  }finally{this.disabled=false;}
+};
+document.getElementById('clearBtn').onclick=function(){
+  localStorage.removeItem('bsjGithubToken');input.value='';status.className='notice';status.textContent='Token browser sudah dihapus.';
+};
+</script>
+</body>
+</html>
