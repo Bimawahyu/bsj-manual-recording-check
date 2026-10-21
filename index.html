@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>BSJ Manual Recording Check</title>
+<style>
+:root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#14213d;background:#f3f6fb}
+*{box-sizing:border-box}body{margin:0;background:#f3f6fb}.shell{max-width:1500px;margin:auto;padding:28px}
+.topbar{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;margin-bottom:22px}.eyebrow{font-size:13px;font-weight:900;letter-spacing:.18em;color:#285a99}
+h1{font-size:38px;margin:9px 0 4px;line-height:1.08}p{color:#66758f}.badges{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.badge,.status{display:inline-flex;align-items:center;border-radius:999px;padding:9px 14px;font-size:13px;font-weight:900;background:#e5f5ea;color:#087536}.badge.muted{background:#edf0f4;color:#59677b}.badge.bad,.status.bad{background:#fdeceb;color:#b42318}.status.good{background:#e5f5ea;color:#087536}.status.mid{background:#fff5dc;color:#956300}
+.panel{background:#fff;border:1px solid #dce5ef;border-radius:18px;padding:22px;margin-bottom:20px;box-shadow:0 2px 8px rgba(20,33,61,.03)}
+.setup{display:grid;grid-template-columns:1.3fr 1fr auto;gap:14px;align-items:end}.query{display:grid;grid-template-columns:1fr 250px auto;gap:16px;align-items:end}
+.field{display:flex;flex-direction:column;gap:8px}.field label{font-weight:850}.field input,.field textarea{width:100%;border:1px solid #ccd7e6;border-radius:12px;padding:13px 15px;font:inherit;background:#fff}.field textarea{resize:vertical}
+.helper,.muted{font-size:13px;color:#718096}.actions{display:flex;gap:8px;flex-wrap:wrap}.primary,.secondary,.ghost{border:0;border-radius:11px;padding:13px 18px;font-size:15px;font-weight:850;cursor:pointer}.primary{background:#265c9f;color:#fff}.secondary{background:#e8f0fb;color:#194f8d}.ghost{background:#eef1f5;color:#445066}.primary:disabled,.secondary:disabled{opacity:.5;cursor:not-allowed}
+.notice{border-radius:15px;padding:15px 18px;margin-bottom:20px}.info{background:#eaf4ff;border:1px solid #c6def8;color:#234f80}.warn{background:#fff8e7;border:1px solid #f1d793;color:#7b5800}.hidden{display:none!important}
+.progress-head,.section-head{display:flex;justify-content:space-between;align-items:center;gap:16px}.progress-track{height:11px;background:#e9eef5;border-radius:999px;overflow:hidden;margin-top:14px}.progress-track>div{height:100%;width:0;background:#2b67ad;transition:width .25s}
+.cards{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;margin-bottom:20px}.metric{background:#fff;border:1px solid #dce5ef;border-radius:15px;padding:18px}.metric span{display:block;font-size:12px;font-weight:850;letter-spacing:.07em;color:#728098;text-transform:uppercase}.metric strong{display:block;font-size:28px;margin-top:8px}.good-card{border-color:#cce8d5}.mid-card{border-color:#f0daa7}.bad-card{border-color:#f1c9c5}
+.table-wrap{overflow:auto;border:1px solid #e0e7f0;border-radius:12px}table{width:100%;border-collapse:collapse;min-width:900px}th,td{text-align:left;padding:13px 14px;border-bottom:1px solid #e7edf4;white-space:nowrap}th{background:#f6f8fb;color:#4d607d;font-size:12px;text-transform:uppercase;letter-spacing:.04em}tbody tr.clickable{cursor:pointer}tbody tr.clickable:hover{background:#f5f9ff}
+.detail-grid{display:grid;grid-template-columns:1fr 1.25fr;gap:18px}.compact table{min-width:600px}.section-gap{margin-top:26px}.required{color:#c2332f}
+.timeline-shell{border:1px solid #dfe6ef;border-radius:14px;padding:18px;margin:18px 0}.legend{display:flex;gap:14px;flex-wrap:wrap;margin:8px 0 16px;font-size:13px}.dot{width:11px;height:11px;border-radius:3px;display:inline-block;margin-right:5px}.green{background:#35a768}.red{background:#dc4c4c}.blue{background:#4285d4}.gray{background:#dfe4ea}.tl-row{display:grid;grid-template-columns:68px 1fr;gap:10px;align-items:center;margin:9px 0}.tl-label{font-weight:800}.tl-bar{display:flex;height:24px;border-radius:6px;overflow:hidden;background:#dfe4ea;border:1px solid #d6dde6}.tl-seg{height:100%;min-width:1px}.tl-axis{display:grid;grid-template-columns:68px 1fr;gap:10px}.tl-ticks{display:flex;justify-content:space-between;font-size:11px;color:#77849a}
+.toast{position:fixed;right:24px;bottom:24px;background:#17233b;color:#fff;padding:14px 18px;border-radius:11px;box-shadow:0 10px 30px rgba(0,0,0,.2);z-index:10}.toast.error{background:#a92720}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.connection-details summary{cursor:pointer;font-weight:800;color:#315f98}
+@media(max-width:950px){.shell{padding:16px}.topbar{flex-direction:column}.badges{justify-content:flex-start}.setup,.query{grid-template-columns:1fr}.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.detail-grid{grid-template-columns:1fr}h1{font-size:30px}}
+</style>
+</head>
+<body>
+<main class="shell">
+<header class="topbar">
+  <div><div class="eyebrow">BSJ MONITOR · REMOTE</div><h1>Manual Recording Check</h1><p>Cek recording per IMEI dan tanggal dari mana saja.</p></div>
+  <div class="badges"><div id="backendBadge" class="badge muted">Backend belum terkoneksi</div><div id="sourceBadge" class="badge muted">BSJ source belum dicek</div></div>
+</header>
+
+<details class="panel connection-details" open>
+  <summary>Koneksi backend</summary>
+  <div class="setup" style="margin-top:16px">
+    <div class="field"><label for="backendUrl">Backend HTTPS URL</label><input id="backendUrl" type="url" placeholder="https://bsj-monitor-staging.company.com"><div class="helper">GitHub Pages hanya frontend. Credential BSJ tetap aman di backend server.</div></div>
+    <div class="field"><label for="accessToken">Remote access token</label><input id="accessToken" type="password" placeholder="Token dari server"><div class="helper">Token hanya disimpan selama tab/browser session ini.</div></div>
+    <div class="actions"><button id="connectBtn" class="secondary">Connect</button><button id="forgetBtn" class="ghost">Forget</button></div>
+  </div>
+</details>
+
+<section id="connectionNotice" class="notice info"><strong>Belum terkoneksi.</strong> Masukkan URL backend staging/server yang menjalankan BSJ Remote API.</section>
+
+<section class="panel query">
+  <div class="field"><label for="imeis">Device IMEI <span class="required">*</span></label><textarea id="imeis" rows="4" placeholder="55000147064&#10;55000147065"></textarea><div class="helper"><span id="deviceCount">0 device detected</span> · comma, space, semicolon, atau enter bisa dipakai</div></div>
+  <div class="field"><label for="date">Recording Date <span class="required">*</span></label><input id="date" type="date"></div>
+  <button id="runBtn" class="primary" disabled>Check Recording</button>
+</section>
+
+<section class="notice info"><strong>Manual check.</strong> Website ini mengirim IMEI + tanggal ke backend, lalu menampilkan hasil Engine ON/OFF, File List, completeness per channel, gap, dan raw video file. Tidak ada BSJ API key/password yang disimpan di GitHub.</section>
+
+<section id="progressPanel" class="panel hidden">
+  <div class="progress-head"><div><strong id="progressTitle">Starting…</strong><div id="progressMessage" class="muted"></div></div><span id="progressPct">0%</span></div>
+  <div class="progress-track"><div id="progressBar"></div></div>
+</section>
+
+<section id="resultArea" class="hidden">
+  <div class="cards">
+    <article class="metric"><span>Requested</span><strong id="metricDevices">0</strong></article>
+    <article class="metric good-card"><span>Good</span><strong id="metricGood">0</strong></article>
+    <article class="metric mid-card"><span>Medium</span><strong id="metricMedium">0</strong></article>
+    <article class="metric bad-card"><span>Bad</span><strong id="metricBad">0</strong></article>
+    <article class="metric"><span>Video Gaps</span><strong id="metricGaps">0</strong></article>
+  </div>
+
+  <section class="panel">
+    <div class="section-head"><div><h2>Device Summary</h2><p>Klik row untuk buka detail lengkap.</p></div><button id="exportBtn" class="secondary">Export Excel</button></div>
+    <div class="table-wrap"><table id="summaryTable"><thead><tr><th>IMEI</th><th>Plate</th><th>Engine ON</th><th>Installed CH</th><th>Video Files</th><th>Min Coverage</th><th>Gaps</th><th>Status</th><th>File List</th></tr></thead><tbody></tbody></table></div>
+  </section>
+
+  <section id="detailPanel" class="panel hidden">
+    <div class="section-head"><div><h2 id="detailTitle">Device Detail</h2><p id="detailMeta"></p></div><button id="closeDetail" class="ghost">Close</button></div>
+
+    <div id="timelinePanel" class="timeline-shell hidden">
+      <h3 style="margin-top:0">Recording Timeline · 24 Hours</h3>
+      <div class="legend"><span><i class="dot green"></i>Engine ON + video</span><span><i class="dot red"></i>Engine ON + no video</span><span><i class="dot blue"></i>Engine OFF + video</span><span><i class="dot gray"></i>Engine OFF + no video</span></div>
+      <div id="timelineWarning" class="notice warn hidden"></div>
+      <div id="timelineRows"></div>
+      <div class="tl-axis"><span></span><div class="tl-ticks"><span>00</span><span>03</span><span>06</span><span>09</span><span>12</span><span>15</span><span>18</span><span>21</span><span>24</span></div></div>
+    </div>
+
+    <div class="detail-grid">
+      <div><h3>Engine ON Intervals</h3><div class="table-wrap compact"><table id="engineIntervalTable"><thead><tr><th>ON</th><th>OFF</th><th>Duration</th></tr></thead><tbody></tbody></table></div></div>
+      <div><h3>Channel Coverage</h3><div class="table-wrap compact"><table id="channelTable"><thead><tr><th>CH</th><th>Coverage</th><th>Covered</th><th>Missing</th><th>Gap Time</th><th>Gaps</th><th>Status</th></tr></thead><tbody></tbody></table></div></div>
+    </div>
+
+    <h3 class="section-gap">Significant Video Gap Detail</h3>
+    <div class="table-wrap compact"><table id="gapTable"><thead><tr><th>Channel</th><th>Gap Start</th><th>Gap End</th><th>Duration</th></tr></thead><tbody></tbody></table></div>
+
+    <h3 class="section-gap">Engine Events</h3>
+    <div class="table-wrap compact"><table id="engineEventTable"><thead><tr><th>Time</th><th>Status</th><th>Location</th><th>Mileage</th><th>Speed</th></tr></thead><tbody></tbody></table></div>
+
+    <h3 class="section-gap">Raw Video File List</h3>
+    <div class="table-wrap compact"><table id="videoTable"><thead><tr><th>Channel</th><th>Begin Time</th><th>End Time</th><th>Duration</th></tr></thead><tbody></tbody></table></div>
+  </section>
+</section>
+<div id="toast" class="toast hidden"></div>
+</main>
+
+<script>
+let bootstrap=null,currentJob=null,currentResult=null,pollTimer=null;
+const $=id=>document.getElementById(id);
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const normalizeBase=v=>String(v||"").trim().replace(/\/+$/,"");
+const apiBase=()=>normalizeBase(localStorage.getItem("bsjRemoteBackend")||$("backendUrl").value);
+const token=()=>sessionStorage.getItem("bsjRemoteToken")||$("accessToken").value.trim();
+function reqHeaders(extra={}){const h={...extra};if(token())h["X-Remote-Dashboard-Token"]=token();return h}
+async function api(path,opt={}){if(!apiBase())throw new Error("Backend URL belum diisi.");return fetch(apiBase()+path,{...opt,headers:reqHeaders(opt.headers||{})})}
+function toast(m,e=false){const x=$("toast");x.textContent=m;x.className="toast"+(e?" error":"");x.classList.remove("hidden");setTimeout(()=>x.classList.add("hidden"),4500)}
+function err(data,f="Request failed"){const d=data?.detail;return typeof d==="string"?d:(d&&typeof d==="object"?(d.error||d.message||f):(data?.message||f))}
+function parseImeis(){const s=$("imeis").value.normalize("NFKC").replace(/[\u200B-\u200D\uFEFF]/g,"");return s.split(/[,;\s]+/).map(x=>x.trim()).filter(Boolean).filter((x,i,a)=>a.indexOf(x)===i)}
+function updateCount(){const n=parseImeis().length;$("deviceCount").textContent=n+" device"+(n===1?"":"s")+" detected"}
+function pct(v){return v===null||v===undefined?"-":Number(v).toFixed(2)+"%"}
+function fmtSec(v){const n=Math.max(0,Number(v||0)),h=Math.floor(n/3600),m=Math.floor((n%3600)/60),s=Math.floor(n%60);return[h,m,s].map(x=>String(x).padStart(2,"0")).join(":")}
+function statusClass(v){const s=String(v||"").toLowerCase();return s==="good"?"good":s==="medium"?"mid":s==="bad"?"bad":""}
+async function connect(){
+  const base=normalizeBase($("backendUrl").value);
+  if(!/^https:\/\//i.test(base)){toast("Untuk remote access gunakan backend HTTPS.",true);return}
+  localStorage.setItem("bsjRemoteBackend",base);
+  if($("accessToken").value.trim())sessionStorage.setItem("bsjRemoteToken",$("accessToken").value.trim());
+  $("connectBtn").disabled=true;
+  try{
+    const r=await api("/api/remote/bootstrap"),data=await r.json();
+    if(!r.ok)throw new Error(err(data,"Backend connection failed"));
+    bootstrap=data;
+    const ready=!!(data.file_source_ready&&data.engine_source_ready&&data.vehicle_mapping_ready);
+    $("backendBadge").textContent="Backend connected";$("backendBadge").className="badge";
+    $("sourceBadge").textContent=ready?"BSJ sources ready":"BSJ source belum lengkap";$("sourceBadge").className="badge "+(ready?"":"muted");
+    $("date").value=$("date").value||data.today;
+    $("runBtn").disabled=!ready;
+    $("connectionNotice").innerHTML=ready?"<strong>Connected.</strong> Backend siap untuk Manual Recording Check.":"<strong>Backend connected.</strong> Credential/source BSJ di server belum lengkap.";
+    toast("Backend connected.");
+  }catch(e){$("backendBadge").textContent="Backend unavailable";$("backendBadge").className="badge bad";$("runBtn").disabled=true;toast(e.message,true)}
+  finally{$("connectBtn").disabled=false}
+}
+function forget(){localStorage.removeItem("bsjRemoteBackend");sessionStorage.removeItem("bsjRemoteToken");$("backendUrl").value="";$("accessToken").value="";$("backendBadge").textContent="Backend belum terkoneksi";$("backendBadge").className="badge muted";$("sourceBadge").textContent="BSJ source belum dicek";$("sourceBadge").className="badge muted";$("runBtn").disabled=true}
+async function run(){
+  const imeis=$("imeis").value.trim(),date=$("date").value;if(!imeis||!date){toast("Isi IMEI dan tanggal recording.",true);return}
+  $("runBtn").disabled=true;$("resultArea").classList.add("hidden");$("detailPanel").classList.add("hidden");$("progressPanel").classList.remove("hidden");
+  $("progressTitle").textContent="Starting";$("progressMessage").textContent="Submitting manual recording check…";$("progressBar").style.width="5%";$("progressPct").textContent="5%";
+  try{
+    const r=await api("/api/remote/check",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({imeis,date,environment:"Production"})});
+    const data=await r.json();if(!r.ok)throw new Error(err(data,"Unable to start recording check"));currentJob=data.job_id;poll()
+  }catch(e){$("runBtn").disabled=false;$("progressPanel").classList.add("hidden");toast(e.message,true)}
+}
+async function poll(){
+  if(!currentJob)return;
+  try{
+    const r=await api("/api/remote/jobs/"+encodeURIComponent(currentJob)),job=await r.json();if(!r.ok)throw new Error(err(job,"Unable to read job"));
+    const total=Number(job.total||0),cur=Number(job.current||0),p=total?Math.min(100,Math.round(cur/total*100)):(job.status==="completed"?100:8);
+    $("progressTitle").textContent=String(job.stage||job.status||"Working").replaceAll("_"," ").replace(/\b\w/g,x=>x.toUpperCase());
+    $("progressMessage").textContent=job.message||"";$("progressPct").textContent=p+"%";$("progressBar").style.width=p+"%";
+    if(job.status==="completed"){currentResult=job.result||{};render(currentResult);$("progressPanel").classList.add("hidden");$("runBtn").disabled=false;return}
+    if(job.status==="failed")throw new Error(job.error||job.message||"Recording check failed");
+    pollTimer=setTimeout(poll,1200)
+  }catch(e){$("runBtn").disabled=false;$("progressPanel").classList.add("hidden");toast(e.message,true)}
+}
+function render(result){
+  $("resultArea").classList.remove("hidden");const s=result.summary||{},rows=result.device_summary||[];
+  $("metricDevices").textContent=s.requested_devices??rows.length;$("metricGood").textContent=s.good??0;$("metricMedium").textContent=s.medium??0;$("metricBad").textContent=s.bad??0;$("metricGaps").textContent=s.total_significant_gaps??(result.video_gaps||[]).length;
+  $("summaryTable").querySelector("tbody").innerHTML=rows.map(r=>`<tr class="clickable" data-imei="${esc(r.imei)}"><td><strong>${esc(r.imei)}</strong></td><td>${esc(r.plate||"-")}</td><td>${esc(r.engine_on_duration||"-")}</td><td>${esc(r.installed_channels||"-")}</td><td>${esc(r.video_files??0)}</td><td>${esc(pct(r.min_coverage_percent))}</td><td>${esc(r.gap_count??0)}</td><td><span class="status ${statusClass(r.status)}">${esc(r.status||"-")}</span></td><td>${esc(r.command_status||"-")}</td></tr>`).join("")||'<tr><td colspan="9">No result rows.</td></tr>';
+  $("summaryTable").querySelectorAll("tbody tr[data-imei]").forEach(tr=>tr.addEventListener("click",()=>showDetail(tr.dataset.imei)))
+}
+function parseTime(s,dateText){
+  if(!s)return null;const raw=String(s).trim();let d=new Date(raw.replace(" ","T"));if(!Number.isNaN(d.getTime()))return d;
+  const m=raw.match(/(\d{2}):(\d{2}):(\d{2})/);if(m){d=new Date(dateText+"T"+m[1]+":"+m[2]+":"+m[3]);if(!Number.isNaN(d.getTime()))return d}return null
+}
+function clipInterval(a,b,start,end){if(!a||!b)return null;const s=Math.max(a.getTime(),start),e=Math.min(b.getTime(),end);return e>s?[s,e]:null}
+function mergeIntervals(arr){const a=arr.filter(Boolean).sort((x,y)=>x[0]-y[0]);const out=[];for(const x of a){if(!out.length||x[0]>out[out.length-1][1])out.push([...x]);else out[out.length-1][1]=Math.max(out[out.length-1][1],x[1])}return out}
+function covers(arr,a,b){return arr.some(x=>x[0]<b&&x[1]>a)}
+function renderTimeline(imei,d){
+  const panel=$("timelinePanel"),rowsEl=$("timelineRows"),warn=$("timelineWarning");panel.classList.remove("hidden");warn.classList.add("hidden");rowsEl.innerHTML="";
+  const cmd=String(d.command_status||"").toUpperCase(),eng=String(d.engine_data_status||"").toUpperCase(),cfg=String(d.channel_config_status||"").toUpperCase();
+  if((cmd&&cmd.includes("FAILED"))||(eng&&eng.includes("FAILED"))||(cfg&&cfg.includes("INVALID"))){warn.textContent="Timeline tidak ditampilkan karena source data tidak valid. Kondisi ini tidak boleh divisualkan sebagai recording loss.";warn.classList.remove("hidden");return}
+  const dateText=$("date").value,start=new Date(dateText+"T00:00:00").getTime(),end=new Date(dateText+"T24:00:00").getTime();
+  const engine=mergeIntervals((currentResult.engine_intervals||[]).filter(x=>String(x.imei)===String(imei)).map(x=>clipInterval(parseTime(x.engine_on,dateText),parseTime(x.engine_off,dateText),start,end)));
+  const chRows=(currentResult.channel_analysis||[]).filter(x=>String(x.imei)===String(imei));
+  const channels=[...new Set(chRows.map(x=>String(x.channel||"").trim()).filter(Boolean))];
+  if(!channels.length){warn.textContent="Installed channel tidak tersedia untuk membuat timeline.";warn.classList.remove("hidden");return}
+  for(const ch of channels){
+    const vids=mergeIntervals((currentResult.video_files||[]).filter(x=>String(x.imei)===String(imei)&&String(x.channel)===ch).map(x=>clipInterval(parseTime(x.begin_time,dateText),parseTime(x.end_time,dateText),start,end)));
+    const points=[start,end,...engine.flat(),...vids.flat()].filter(x=>x>=start&&x<=end).sort((a,b)=>a-b);
+    const uniq=[...new Set(points)],segs=[];
+    for(let i=0;i<uniq.length-1;i++){const a=uniq[i],b=uniq[i+1];if(b<=a)continue;const eo=covers(engine,a,b),vv=covers(vids,a,b);segs.push({a,b,cls:eo?(vv?"green":"red"):(vv?"blue":"gray")})}
+    const bar=segs.map(s=>`<span class="tl-seg ${s.cls}" style="width:${((s.b-s.a)/(end-start)*100).toFixed(4)}%" title="${new Date(s.a).toLocaleTimeString("id-ID")} - ${new Date(s.b).toLocaleTimeString("id-ID")}"></span>`).join("");
+    rowsEl.insertAdjacentHTML("beforeend",`<div class="tl-row"><div class="tl-label">${esc(ch)}</div><div class="tl-bar">${bar}</div></div>`)
+  }
+}
+function showDetail(imei){
+  const d=(currentResult.device_summary||[]).find(x=>String(x.imei)===String(imei))||{};$("detailPanel").classList.remove("hidden");$("detailTitle").textContent="Device "+imei;$("detailMeta").textContent=(d.plate||"-")+" · "+(d.domain||"UNKNOWN")+" · "+(d.status||"-")+" · File List "+(d.command_status||"-");renderTimeline(imei,d);
+  const engine=(currentResult.engine_intervals||[]).filter(x=>String(x.imei)===String(imei));$("engineIntervalTable").querySelector("tbody").innerHTML=engine.map(x=>`<tr><td>${esc(x.engine_on||"-")}</td><td>${esc(x.engine_off||"-")}</td><td>${esc(fmtSec(x.duration_seconds))}</td></tr>`).join("")||'<tr><td colspan="3">No Engine ON intervals.</td></tr>';
+  const ch=(currentResult.channel_analysis||[]).filter(x=>String(x.imei)===String(imei));$("channelTable").querySelector("tbody").innerHTML=ch.map(x=>`<tr><td>${esc(x.channel||"-")}</td><td>${esc(pct(x.coverage_percent))}</td><td>${esc(x.covered_duration||"-")}</td><td>${esc(x.missing_duration||"-")}</td><td>${esc(x.significant_gap_duration||"-")}</td><td>${esc(x.gap_count??0)}</td><td><span class="status ${statusClass(x.status)}">${esc(x.status||"-")}</span></td></tr>`).join("")||'<tr><td colspan="7">No channel analysis.</td></tr>';
+  const gaps=(currentResult.video_gaps||[]).filter(x=>String(x.imei)===String(imei));$("gapTable").querySelector("tbody").innerHTML=gaps.map(x=>`<tr><td>${esc(x.channel||"-")}</td><td>${esc(x.gap_start||"-")}</td><td>${esc(x.gap_end||"-")}</td><td>${esc(x.gap_duration||fmtSec(x.gap_seconds))}</td></tr>`).join("")||'<tr><td colspan="4">No significant gaps.</td></tr>';
+  const ev=(currentResult.engine_events||[]).filter(x=>String(x.imei)===String(imei));$("engineEventTable").querySelector("tbody").innerHTML=ev.map(x=>`<tr><td>${esc(x.time||"-")}</td><td>${esc(x.status||"-")}</td><td>${esc(x.location||"-")}</td><td>${esc(x.mileage||"-")}</td><td>${esc(x.speed||"-")}</td></tr>`).join("")||'<tr><td colspan="5">No engine events.</td></tr>';
+  const vf=(currentResult.video_files||[]).filter(x=>String(x.imei)===String(imei));$("videoTable").querySelector("tbody").innerHTML=vf.map(x=>`<tr><td>${esc(x.channel||"-")}</td><td>${esc(x.begin_time||"-")}</td><td>${esc(x.end_time||"-")}</td><td>${esc(x.duration||fmtSec(x.duration_seconds))}</td></tr>`).join("")||'<tr><td colspan="4">No video files.</td></tr>';$("detailPanel").scrollIntoView({behavior:"smooth",block:"start"})
+}
+async function exportExcel(){if(!currentJob){toast("Belum ada completed job.",true);return}try{const r=await api("/api/remote/jobs/"+encodeURIComponent(currentJob)+"/export");if(!r.ok){let d={};try{d=await r.json()}catch(e){}throw new Error(err(d,"Export failed"))}const blob=await r.blob(),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="BSJ_Manual_Recording_"+($("date").value||"result")+".xlsx";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)}catch(e){toast(e.message,true)}}
+$("imeis").addEventListener("input",updateCount);$("connectBtn").addEventListener("click",connect);$("forgetBtn").addEventListener("click",forget);$("runBtn").addEventListener("click",run);$("exportBtn").addEventListener("click",exportExcel);$("closeDetail").addEventListener("click",()=>$("detailPanel").classList.add("hidden"));
+window.addEventListener("load",()=>{$("backendUrl").value=localStorage.getItem("bsjRemoteBackend")||"";$("accessToken").value=sessionStorage.getItem("bsjRemoteToken")||"";$("date").value=new Date().toISOString().slice(0,10);updateCount();if($("backendUrl").value)connect()});
+</script>
+</body>
+</html>
