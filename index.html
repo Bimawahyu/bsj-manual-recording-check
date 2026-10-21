@@ -125,7 +125,7 @@ async function connect(){
     el('workflowBadge').className='badge muted';
     el('runBtn').disabled=true;
     notice.classList.remove('hidden');
-    notice.innerHTML='<strong>Browser ini belum disiapkan.</strong> Buka <a href="./setup.html">setup satu kali</a>, lalu halaman utama akan auto-connect seterusnya.';
+    notice.innerHTML='<strong>Aplikasi belum diaktifkan di browser ini.</strong> Hubungi admin untuk aktivasi satu kali. Setelah aktif, user cukup input IMEI dan tanggal.';
     return;
   }
   try{
@@ -143,7 +143,7 @@ async function connect(){
     el('workflowBadge').className='badge muted';
     el('runBtn').disabled=true;
     notice.classList.remove('hidden');
-    notice.innerHTML='<strong>Koneksi GitHub gagal.</strong> <a href="./setup.html">Perbarui token browser</a>.';
+    notice.innerHTML='<strong>Koneksi service gagal.</strong> Hubungi admin untuk aktivasi ulang browser ini.';
     toast(e.message,true);
   }
 }
@@ -166,7 +166,7 @@ function requestId(){return crypto.randomUUID().replace(/-/g,'').slice(0,16);}
 
 async function runCheck(){
   var imeis=parseImeis();var date=el('date').value;
-  if(!token()){toast('Browser belum disiapkan. Buka setup.html satu kali.',true);return;}
+  if(!token()){toast('Aplikasi belum diaktifkan di browser ini. Hubungi admin.',true);return;}
   if(!imeis.length||!date){toast('Isi IMEI dan tanggal recording.',true);return;}
   if(imeis.length>300){toast('Maksimum 300 device per check.',true);return;}
   el('runBtn').disabled=true;el('resultArea').classList.add('hidden');el('detailPanel').classList.add('hidden');
