@@ -55,7 +55,11 @@ Permission minimal:
 
 - Repository permission **Actions: Read and write**
 
-Masukkan token yang sama sebagai repository secret `MANUAL_GITHUB_TOKEN` dan pada field **GitHub access token** di halaman web. Token pada halaman hanya disimpan di browser `sessionStorage`.
+Masukkan token sebagai repository secret `MANUAL_GITHUB_TOKEN`.
+
+Dashboard utama tidak menampilkan field token. Untuk browser baru, buka `setup.html` satu kali, masukkan token yang sama, lalu token disimpan hanya di `localStorage` browser tersebut. Setelah itu halaman utama auto-connect.
+
+Token sengaja **tidak di-hardcode** ke HTML/JavaScript karena repository dan GitHub Pages bersifat publik; hardcode akan membuat PAT dapat dibaca dari source/devtools.
 
 IMEI + tanggal dienkripsi AES-GCM di browser menggunakan key turunan dari token sebelum dikirim sebagai workflow input. Workflow mendekripsinya menggunakan secret `MANUAL_GITHUB_TOKEN`.
 
